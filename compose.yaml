@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: agriedge
+      POSTGRES_USER: agriedge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the environment}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agriedge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  web:
+    build: .
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      APP_ENV: demo
+      APP_URL: http://localhost:3000
+      DATABASE_URL: postgresql://agriedge:${POSTGRES_PASSWORD}@db:5432/agriedge
+      OTP_PROVIDER: mock
+      PAYMENT_PROVIDER: mock
+      PAYMENT_MODE: sandbox
+      PRICE_CSV_URI: fixtures/prices.csv
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - private_files:/app/work/private-files
+  worker:
+    build: .
+    command: ["node", "dist/index.mjs"]
+    healthcheck:
+      disable: true
+    environment:
+      APP_ENV: demo
+      DATABASE_URL: postgresql://agriedge:${POSTGRES_PASSWORD}@db:5432/agriedge
+      PRICE_CSV_URI: fixtures/prices.csv
+    depends_on:
+      db:
+        condition: service_healthy
+  ml:
+    build: ./ml
+    environment:
+      ML_SERVICE_TOKEN: ${ML_SERVICE_TOKEN:?Set ML_SERVICE_TOKEN in the environment}
+    expose: ["8000"]
+volumes:
+  postgres_data:
+  private_files:
+

@@ -1,0 +1,2 @@
+ALTER TABLE "User" ALTER COLUMN "village" SET DEFAULT 'Nagpur';
+ALTER TABLE "Lot" ALTER COLUMN "location" SET DEFAULT 'Nagpur';

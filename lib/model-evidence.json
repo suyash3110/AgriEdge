@@ -1,0 +1,54 @@
+{
+  "evaluatedOn": "2026-09-08",
+  "imageCandidates": [
+    {
+      "crop": "tomato",
+      "macroF1": 0.8574966635191801,
+      "classes": [
+        "Damaged",
+        "Old",
+        "Ripe",
+        "Unripe"
+      ],
+      "testImages": 1078,
+      "sha256": "03ce8f41e94aec1ff281c6e3033f1dae5742efd76b27fede634548afad3affca"
+    },
+    {
+      "crop": "potato",
+      "macroF1": 0.8948149162444659,
+      "classes": [
+        "fresh",
+        "rotten"
+      ],
+      "testImages": 419,
+      "sha256": "7ed334eed418236a90168a6a80e634cbe4b848155bc5120d246d01cb2cbacaf4"
+    },
+    {
+      "crop": "rice",
+      "macroF1": 0.7304897545921082,
+      "classes": [
+        "entero",
+        "mancha",
+        "quebrado",
+        "tiza"
+      ],
+      "testImages": 979,
+      "sha256": "ee89cf077fe0994b6726e44508a890344fce6ff8b66c83096121d804184472b7"
+    },
+    {
+      "crop": "groundnut",
+      "macroF1": 0.9560134080747171,
+      "classes": [
+        "without mold",
+        "with mold"
+      ],
+      "testImages": 8100,
+      "sha256": "cfc0a326a3737457f23b5bd84bd5081b625cbc43860f8e3c6f0ad93772fa6d25"
+    }
+  ],
+  "priceCandidates": 6,
+  "priceSeriesReviewed": 100,
+  "observations": 9261,
+  "historyStart": "2024-01-01",
+  "historyEnd": "2026-04-20"
+}

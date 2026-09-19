@@ -1,0 +1,7 @@
+source,market,district,state,commodity,variety,observed_date,unit,min_price,modal_price,max_price
+Fictional demonstration fixture,Nagpur sample mandi,Nagpur,Maharashtra,wheat,Lokwan,2026-09-05,quintal,2350,2450,2550
+Fictional demonstration fixture,Nagpur sample mandi,Nagpur,Maharashtra,paddy,Common,2026-09-05,quintal,2100,2200,2300
+Fictional demonstration fixture,Nagpur sample mandi,Nagpur,Maharashtra,tomato,Local,2026-09-05,quintal,1400,1800,2200
+Fictional demonstration fixture,Nagpur sample mandi,Nagpur,Maharashtra,onion,Local,2026-09-05,quintal,1900,2100,2300
+Fictional demonstration fixture,Nagpur sample mandi,Nagpur,Maharashtra,gram,Desi,2026-09-05,quintal,5100,5300,5500
+

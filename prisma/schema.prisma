@@ -1,0 +1,401 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id String @id @default(uuid())
+  phone String @unique
+  name String
+  role String
+  status String @default("pending")
+  suspended Boolean @default(false)
+  fpoId String?
+  permissions String[] @default([])
+  village String @default("Nagpur")
+  language String @default("en")
+  crops String[] @default([])
+  trustScore Int @default(100)
+  createdAt DateTime @default(now())
+}
+model Session {
+  id String @id
+  userId String
+  expiresAt DateTime
+}
+model Challenge {
+  id String @id @default(uuid())
+  phone String
+  purpose String
+  subjectId String?
+  hash String
+  attempts Int @default(0)
+  expiresAt DateTime
+  consumed Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([phone, purpose])
+}
+model Lot {
+  id String @id @default(uuid())
+  ownerId String
+  fpoId String?
+  title String
+  crop String
+  category String @default("produce")
+  material String?
+  form String?
+  intendedUse String?
+  contamination String?
+  kg Decimal @db.Decimal(18,3)
+  reservedKg Decimal @default(0) @db.Decimal(18,3)
+  expectedRate BigInt
+  grade String @default("Farmer declared")
+  gradeMethod String @default("farmer_declared")
+  imageAssessmentId String? @unique
+  location String @default("Nagpur")
+  harvestDate DateTime
+  availableDate DateTime
+  deadline DateTime
+  status String @default("draft")
+  circleId String? @unique
+  createdAt DateTime @default(now())
+  bids Bid[]
+  agreement Agreement?
+}
+model Bid {
+  id String @id @default(uuid())
+  lotId String
+  lot Lot @relation(fields:[lotId],references:[id])
+  buyerId String
+  rate BigInt
+  costPaise BigInt?
+  payer String
+  arranger String
+  terms String
+  status String @default("active")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([lotId,status])
+}
+model Agreement {
+  id String @id @default(uuid())
+  lotId String @unique
+  lot Lot @relation(fields:[lotId],references:[id])
+  bidId String @unique
+  sellerId String
+  buyerId String
+  kg Decimal @db.Decimal(18,3)
+  rate BigInt
+  tolerancePaise BigInt @default(0)
+  totalPaise BigInt
+  costPaise BigInt?
+  payer String
+  arranger String
+  terms String
+  fulfilment String @default("accepted")
+  payment String @default("unpaid")
+  settlement String @default("pending")
+  createdAt DateTime @default(now())
+}
+model Demand {
+  id String @id @default(uuid())
+  buyerId String
+  crop String
+  category String @default("produce")
+  kg Decimal @db.Decimal(18,3)
+  grade String
+  location String
+  deadline DateTime
+  terms String
+  createdAt DateTime @default(now())
+}
+model Circle {
+  id String @id @default(uuid())
+  fpoId String
+  demandId String
+  name String
+  crop String
+  grade String
+  targetKg Decimal @db.Decimal(18,3)
+  minimumKg Decimal @db.Decimal(18,3)
+  hub String
+  deadline DateTime
+  status String @default("forming")
+  allocationRule String @default("Proportional to accepted weight; no undisclosed deductions")
+  createdAt DateTime @default(now())
+}
+model Contribution {
+  id String @id @default(uuid())
+  circleId String
+  farmerId String
+  lotId String
+  pledgedKg Decimal @db.Decimal(18,3)
+  receivedKg Decimal @default(0) @db.Decimal(18,3)
+  acceptedKg Decimal @default(0) @db.Decimal(18,3)
+  grade String?
+  status String @default("pledged")
+  consent Boolean
+  createdAt DateTime @default(now())
+  @@unique([circleId,lotId])
+}
+model Quality {
+  id String @id @default(uuid())
+  lotId String
+  requesterId String
+  fpoId String
+  assessorId String?
+  grade String?
+  measurements String?
+  reason String
+  method String @default("manual_requested")
+  createdAt DateTime @default(now())
+}
+model Warehouse {
+  id String @id @default(uuid())
+  fpoId String
+  name String
+  address String
+  crops String[]
+  type String
+  capacityKg Decimal @db.Decimal(18,3)
+  ratePaise BigInt
+  updatedAt DateTime @updatedAt
+}
+model Booking {
+  id String @id @default(uuid())
+  warehouseId String
+  farmerId String
+  crop String
+  kg Decimal @db.Decimal(18,3)
+  startDate DateTime
+  endDate DateTime
+  status String @default("requested")
+  reason String?
+  createdAt DateTime @default(now())
+}
+model StockMovement {
+  id String @id @default(uuid())
+  bookingId String
+  farmerId String
+  fpoId String
+  deltaKg Decimal @db.Decimal(18,3)
+  reason String
+  actorId String
+  createdAt DateTime @default(now())
+}
+model Vehicle {
+  id String @id @default(uuid())
+  ownerId String
+  registration String @unique
+  type String
+  capacityKg Decimal @db.Decimal(18,3)
+}
+model TransportJob {
+  id String @id @default(uuid())
+  agreementId String @unique
+  sellerId String
+  buyerId String
+  transporterId String?
+  vehicleId String?
+  quotePaise BigInt?
+  pickup String
+  destination String
+  kg Decimal @db.Decimal(18,3)
+  payer String
+  arranger String
+  status String @default("open")
+  createdAt DateTime @default(now())
+}
+model Quote {
+  id String @id @default(uuid())
+  jobId String
+  transporterId String
+  vehicleId String
+  amountPaise BigInt
+  terms String
+  createdAt DateTime @default(now())
+  @@unique([jobId,transporterId])
+}
+model LocationPing {
+  id String @id @default(uuid())
+  jobId String
+  latitude Float
+  longitude Float
+  accuracy Float
+  createdAt DateTime @default(now())
+}
+model PaymentOrder {
+  id String @id @default(uuid())
+  agreementId String @unique
+  amountPaise BigInt
+  currency String @default("INR")
+  mode String
+  provider String
+  status String @default("pending")
+  providerRef String? @unique
+  createdAt DateTime @default(now())
+}
+model ProviderEvent {
+  id String @id
+  orderId String
+  kind String
+  verified Boolean
+  createdAt DateTime @default(now())
+}
+model LedgerEntry {
+  id String @id @default(uuid())
+  eventId String
+  agreementId String
+  account String
+  amountPaise BigInt
+  createdAt DateTime @default(now())
+  @@unique([eventId,account])
+}
+model Allocation {
+  id String @id @default(uuid())
+  agreementId String
+  farmerId String
+  amountPaise BigInt
+  status String @default("allocated")
+  @@unique([agreementId,farmerId])
+}
+model Thread {
+  id String @id @default(uuid())
+  title String
+  memberIds String[]
+  blockedIds String[] @default([])
+  contextId String
+  createdAt DateTime @default(now())
+}
+model Message {
+  id String @id @default(uuid())
+  threadId String
+  senderId String
+  body String
+  reported Boolean @default(false)
+  readAt DateTime?
+  createdAt DateTime @default(now())
+}
+model ToleranceProposal {
+  id String @id @default(uuid())
+  agreementId String
+  proposerId String
+  amountPaise BigInt
+  reason String
+  status String @default("pending")
+  decidedBy String?
+  createdAt DateTime @default(now())
+  @@index([agreementId, status])
+}
+model TrustEvent {
+  id String @id @default(uuid())
+  userId String
+  actorId String
+  delta Int
+  reason String
+  action String
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+}
+model Notification {
+  id String @id @default(uuid())
+  userId String
+  title String
+  href String
+  read Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+model Dispute {
+  id String @id @default(uuid())
+  agreementId String
+  openedBy String
+  category String
+  explanation String
+  status String @default("open")
+  outcome String?
+  createdAt DateTime @default(now())
+}
+model Verification {
+  id String @id @default(uuid())
+  subjectId String
+  issuerId String
+  issuerRole String
+  decision String
+  evidence String
+  createdAt DateTime @default(now())
+}
+model AuditEvent {
+  id String @id @default(uuid())
+  actorId String
+  action String
+  subjectId String
+  detail String
+  createdAt DateTime @default(now())
+}
+model Outbox {
+  id String @id @default(uuid())
+  type String
+  payload Json
+  status String @default("pending")
+  attempts Int @default(0)
+  availableAt DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+model Idempotency {
+  id String @id
+  result Json
+  createdAt DateTime @default(now())
+}
+model ImportBatch {
+  id String @id @default(uuid())
+  checksum String @unique
+  source String
+  accepted Int
+  rejected Int
+  errors Json
+  createdAt DateTime @default(now())
+}
+model PriceObservation {
+  id String @id @default(uuid())
+  key String @unique
+  batchId String
+  source String
+  market String
+  district String
+  crop String
+  variety String
+  observedDate DateTime
+  unit String
+  minPaise BigInt
+  modalPaise BigInt
+  maxPaise BigInt
+  revision Int @default(1)
+}
+model Attachment {
+  id String @id @default(uuid())
+  ownerId String
+  contextId String
+  key String @unique
+  mime String
+  size Int
+  createdAt DateTime @default(now())
+}
+
+
+model ImageAssessment {
+  id String @id @default(uuid())
+  ownerId String
+  crop String
+  category String @default("produce")
+  grade String?
+  label String?
+  modelHash String?
+  imageHash String
+  mime String
+  image Bytes
+  lotId String? @unique
+  createdAt DateTime @default(now())
+  @@index([ownerId, createdAt])
+}

@@ -1,0 +1,1 @@
+import {cp,mkdir} from 'node:fs/promises';for(const [source,target] of [['public','.next/standalone/public'],['.next/static','.next/standalone/.next/static'],['prisma','.next/standalone/prisma'],['fixtures','.next/standalone/fixtures']]){await mkdir(target,{recursive:true});await cp(source,target,{recursive:true});}

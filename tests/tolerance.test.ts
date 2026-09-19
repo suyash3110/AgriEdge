@@ -1,0 +1,33 @@
+import { beforeAll, afterAll, test, expect } from "vitest";
+import { db, closeDb } from "../lib/db";
+import { seed } from "../lib/seed";
+import { tolerance } from "../modules/tolerance";
+import type { PrismaClient, User } from "@prisma/client";
+process.env.TEST_DATABASE = "memory";
+let p: PrismaClient, seller: User, buyer: User, stranger: User;
+beforeAll(async () => {
+  p = await db(); await seed(p);
+  seller = await p.user.findUniqueOrThrow({ where: { id: "farmer-1" } });
+  buyer = await p.user.findUniqueOrThrow({ where: { id: "buyer-1" } });
+  stranger = await p.user.findUniqueOrThrow({ where: { id: "buyer-2" } });
+  await p.bid.create({ data: { id: "tolerance-bid", lotId: "lot-tomato", buyerId: buyer.id, rate: 200000n, payer: "buyer", arranger: "buyer", terms: "Agreed base price", expiresAt: new Date(Date.now() + 86400000) } });
+  await p.agreement.create({ data: { id: "tolerance-test", lotId: "lot-tomato", bidId: "tolerance-bid", sellerId: seller.id, buyerId: buyer.id, kg: "500", rate: 200000n, totalPaise: 1000000n, payer: "buyer", arranger: "buyer", terms: "Agreed base price" } });
+});
+afterAll(closeDb);
+test("tolerance needs counterparty consent, replaces previous allowance, and locks before payment", async () => {
+  await expect(tolerance("tolerance.propose", { id: "tolerance-test", amount: "50", reason: "dust allowance" }, stranger)).rejects.toThrow();
+  const proposal = await tolerance("tolerance.propose", { id: "tolerance-test", amount: "50", reason: "dust allowance" }, seller);
+  expect((await p.agreement.findUniqueOrThrow({ where: { id: "tolerance-test" } })).totalPaise).toBe(1000000n);
+  await expect(tolerance("tolerance.respond", { id: proposal!.id, decision: "accepted" }, seller)).rejects.toThrow();
+  await tolerance("tolerance.respond", { id: proposal!.id, decision: "accepted" }, buyer);
+  expect((await p.agreement.findUniqueOrThrow({ where: { id: "tolerance-test" } })).totalPaise).toBe(1025000n);
+  await expect(tolerance("tolerance.respond", { id: proposal!.id, decision: "accepted" }, buyer)).rejects.toThrow();
+  const revision = await tolerance("tolerance.propose", { id: "tolerance-test", amount: "20", reason: "revised dust allowance" }, buyer);
+  await tolerance("tolerance.respond", { id: revision!.id, decision: "accepted" }, seller);
+  expect((await p.agreement.findUniqueOrThrow({ where: { id: "tolerance-test" } })).totalPaise).toBe(1010000n);
+  const rejected = await tolerance("tolerance.propose", { id: "tolerance-test", amount: "70", reason: "further allowance" }, seller);
+  await tolerance("tolerance.respond", { id: rejected!.id, decision: "rejected" }, buyer);
+  expect((await p.agreement.findUniqueOrThrow({ where: { id: "tolerance-test" } })).tolerancePaise).toBe(2000n);
+  await p.paymentOrder.create({ data: { agreementId: "tolerance-test", amountPaise: 1010000n, mode: "sandbox", provider: "mock" } });
+  await expect(tolerance("tolerance.propose", { id: "tolerance-test", amount: "30", reason: "too late" }, seller)).rejects.toThrow("Tolerance cannot change");
+});

@@ -1,0 +1,10 @@
+import {existsSync} from 'node:fs';
+import path from 'node:path';
+import {spawnSync,spawn} from 'node:child_process';
+const root=process.cwd();const source=path.join(root,'work','dataset-review','nagpur-public-prices.csv');
+if(!existsSync(source))throw new Error('Prepare the Nagpur historical CSV first; see docs/SIH-DATA-REVIEW.md.');
+if(!existsSync(path.join(root,'.next','standalone','server.js')))throw new Error('Run npm run build first.');
+const env={...process.env,APP_ENV:'demo',DATABASE_URL:'',DATABASE_DIR:path.join(root,'work','nagpur-preview'),PRICE_CSV_URI:source,APP_URL:'http://127.0.0.1:3001',PORT:'3001'};
+const seeded=spawnSync(process.execPath,['scripts/run.mjs','scripts/seed.ts'],{cwd:root,env,stdio:'inherit',windowsHide:true});if(seeded.status!==0)process.exit(seeded.status||1);
+const server=spawn(process.execPath,['scripts/start.mjs','--port','3001'],{cwd:root,env,stdio:'inherit',windowsHide:true});
+process.on('SIGINT',()=>server.kill());process.on('SIGTERM',()=>server.kill());server.on('exit',code=>process.exit(code||0));
