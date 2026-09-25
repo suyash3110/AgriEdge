@@ -7,6 +7,7 @@ import type { Row } from "@/lib/portal-data";
 import type { MarketObservation } from "@/lib/mandi-csv";
 import { marketCopy } from "@/lib/market-copy";
 import MarketRefresh from "./MarketRefresh";
+import BestTimeToSellChart from "./BestTimeToSellChart";
 
 export default function SellingGuidance({ prices, asOf }: { prices: Row[]; asOf: string }) {
   const locale = useLocale();
@@ -24,7 +25,8 @@ export default function SellingGuidance({ prices, asOf }: { prices: Row[]; asOf:
   const result = sellingGuidance(rows, crop, variety, valid ? Number(kg) : 100, costs, Date.parse(asOf));
   const money = (paise: number) => new Intl.NumberFormat(locale + "-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(paise / 100);
   const date = result.date ? new Date(result.date).toLocaleDateString(locale + "-IN") : "—";
-  return <section className="panel" aria-label={c("Crop selling recommendations", "फसल बिक्री सुझाव", "पीक विक्री शिफारसी")}>
+  return <>
+    <section className="panel" aria-label={c("Crop selling recommendations", "फसल बिक्री सुझाव", "पीक विक्री शिफारसी")}>
     <MarketRefresh />
     <div className="panel-heading"><h2>{c("Crop selling recommendations", "फसल बिक्री सुझाव", "पीक विक्री शिफारसी")}</h2></div>
     <div className="panel-body">
@@ -45,5 +47,7 @@ export default function SellingGuidance({ prices, asOf }: { prices: Row[]; asOf:
         <small>{c("Local calculation, not a future-price forecast. Do not delay perishable produce solely on this comparison.", "स्थानीय गणना, भविष्य के भाव का पूर्वानुमान नहीं। केवल इस तुलना पर नाशवान उपज की बिक्री न टालें।", "स्थानिक गणना, भविष्यातील भावाचा अंदाज नाही. केवळ या तुलनेवर नाशवंत मालाची विक्री पुढे ढकलू नका.")}</small>
       </>}
     </div>
-  </section>;
+  </section>
+  <BestTimeToSellChart prices={rows} crop={crop} variety={variety} />
+  </>;
 }
